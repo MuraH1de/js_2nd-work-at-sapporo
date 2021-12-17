@@ -34,16 +34,16 @@
         <table id="list">
             <!-- ここに追加データが挿入される -->
         </table>
+        <div id="read_area">
+            読み込むために選択したものは、、
+                <input id="read_text" type="text" value size="10">
+                <button id="read-button">読み込み</button>
+        </div>
+
 
         <script>
             const canvas = document.querySelector('#draw-area');
             
-            // GoogleMap取り込み検討中
-            $("#change-button").on("click", function(){
-                console.log(document.getElementById("map"));
-            })
-
-
             //1.Save クリックイベント
             $("#save").on("click", function(){
                 const key = $("#key").val();
@@ -71,30 +71,43 @@
                 $("#list").append(html);
             }
 
+            //4.要素の読み込み
+            let out_key;
+            $("#list th").on("click", function(){
+                out_key = $(this).text();
+                $("#read_text").val(out_key);
+            })
+
+            $("#read-button").on("click", function(){
+                //console.log("aaa");
+                //localStorageからの読み込み
+                const imgData = new Image();
+                imgData.src = localStorage.getItem(out_key);
+                //console.log(imgData.src);
+                context.drawImage(imgData, 0, 0);
+                $("#key").val(out_key);
+            })
+
+            $("#clear-button").on("click", function(){
+                /console.log("clear");
+                $("#key").val("");
+            })
+
             
 
-
-
             //お絵描きアプリのセット
+            const context = canvas.getContext('2d');
             window.addEventListener('load', () => {
                 
                 // contextを使ってcanvasに絵を書いていく
-                const context = canvas.getContext('2d');
+                //const context = canvas.getContext('2d');
             
                 // 直前のマウスのcanvas上のx座標とy座標を記録する
                 const lastPosition = { x: null, y: null };
             
                 // マウスがドラッグされているか(クリックされたままか)判断するためのフラグ
                 let isDrag = false;
-
-                //localStorageからの読み込み
-                const imgData = new Image();
-                imgData.src = localStorage.getItem("aaa");
-                console.log(imgData.src);
-                //imgData.src = "https://www.google.com/maps/embed?pb=!1m14!1m12!1m3!1d2914.705338261837!2d141.34856661468874!3d43.06866449805018!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!5e0!3m2!1sja!2sjp!4v1639487704794!5m2!1sja!2sjp";
-                context.drawImage(imgData, 0, 0);
-
-            
+                
                 // 絵を書く
                 function draw(x, y) {
                     // マウスがドラッグされていなかったら処理を中断する。
