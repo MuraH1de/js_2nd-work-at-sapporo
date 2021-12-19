@@ -5,8 +5,7 @@
         <title>Google Maps Point Marker</title>
         <link rel="stylesheet" href="css/main1.css" type="text/css" media="all">
         <!-- Google Maps API -->
-        <!-- <script src="https://maps.googleapis.com/maps/api/js"></script> -->
-        <script src="http://maps.google.com/maps/api/js?key=xxx&language=ja"></script>
+        <script src="http://maps.google.com/maps/api/js?key=&language=ja"></script>
         <!-- GoogleMAPAPIのキー部分は削除 -->
         <script type="text/javascript" src="js/jquery-2.1.3.min.js"></script>
     </head>
@@ -24,7 +23,7 @@
                 <button id="init_map-ok">決定</button>
             </div>
 
-            <!-- canvasに図を表示させる -->
+            <!-- canvasに地図を表示させる -->
             <div class="fix_map">
                 title: <input type="text" id="key"><br>
 
@@ -32,13 +31,15 @@
                 <canvas id="myCanvas" width="640" height="500"></canvas>
                 <div id="result">---</div>
             </div>
-
+            
+            <!-- ボタン -->
             <ul>
                 <li id="save">Save</li>
                 <li id="clear">Clear</li>
             </ul>
         </main>
         
+        <!-- LocalStorageからの読み込み -->
         <div class="read_map">
             読み込みtitle<input type="text" id="read-key">
             <button id="read_map-ok">読み込み</button>
@@ -48,20 +49,18 @@
             <!-- ここに追加データが挿入される -->
         </table>
 
-        <div class="readarea">
-            <p id="img1"></p>
-        </div>
-
 
         <script>
             // 初期値地図データ取得
-            var marker = null;
-            var lat_v = 43.069066102642495;
-            var lng_v = 141.35077995005446;
-            var z = 15;
-            var map;
-            var latlng;
+            let marker = null;
+            let lat_v = 43.069066102642495;
+            let lng_v = 141.35077995005446;
+            let z = 15;
+            let map;
+            let latlng;
+
             const canvas = document.querySelector('#myCanvas');
+            
             
             function init() {
                 //初期化
@@ -116,10 +115,11 @@
                 lat_v = latlng.lat();
                 lng_v = latlng.lng();
                 console.log(lat_v);
-
+                
                 $(".init_map").css("display","none");
                 $(".fix_map").fadeIn(1000);
 
+                // 指定したMAPの画像表示
                 map = new google.maps.Map(
                     document.getElementById("gmap"),{
                         zoom : z,
@@ -128,11 +128,11 @@
                     }
                 );
 
-                var points = [], myPath = new google.maps.Polyline();
+                let points = [], myPath = new google.maps.Polyline();
                 google.maps.event.addListener(map, "click", function(evt) {
-                    var pos = evt.latLng;
-                    var lat = pos.lat();
-                    var lng = pos.lng();
+                    let pos = evt.latLng;
+                    let lat = pos.lat();
+                    let lng = pos.lng();
                     document.getElementById("result").innerHTML = "緯度："+lat+"、経度："+lng;
                     points.push(new google.maps.LatLng(lat, lng));
                     myPath.setPath(points);
@@ -141,35 +141,13 @@
             })
 
 
-            //読み込みボタンを押したとき
-            $("#read_map-ok").on("click", function(){
-                $(".init_map").css("display","none");
-                $(".fix_map").fadeIn(1000);
-
-                var context = canvas.getContext('2d');
-                // LocalStroageからデータを取得する
-                var base64 = window.localStorage.getItem("bbb");
-                console.log(base64);
-
-                // Imageオブジェクトを作成し、src属性にデータを設定する
-                const imgData = new Image();
-                imgData.src = base64;
-                $("#img1").html('<img src=' + base64 + ' alt="サンプル画像">');
-                
-                // imgData.onload = function(){
-                // //     // 画像の読み込みが終わったら、Canvasに画像を反映する。
-                //     context.drawImage(imgData, 0, 0);
-                // }
-            })
-            ///読み込みボタンを押したとき編集中
-
             
             // 地図の上でドラッグして描く
-            var drawFlag = false;
-            var oldX = 0;
-            var oldY = 0;
+            let drawFlag = false;
+            let oldX = 0;
+            let oldY = 0;
             window.addEventListener("load", function(){
-                var can = document.getElementById("myCanvas");
+                let can = document.getElementById("myCanvas");
                 can.addEventListener("mousemove", draw, true);
                 can.addEventListener("mousedown", function(e){
                     drawFlag = true;
@@ -185,17 +163,18 @@
             // 描画処理
             function draw(e){
                 if (!drawFlag) return;
-                var x = e.clientX;
-                var y = e.clientY;
-                var can = document.getElementById("myCanvas");
-                var context = can.getContext("2d");
+                let x = e.clientX;
+                let y = e.clientY;
+                let can = document.getElementById("myCanvas");
+                let context = can.getContext("2d");
                 context.strokeStyle = "rgba(255,0,0,0.5)";	// 赤色
                 context.lineWidth = 5;
                 context.lineCap = 'round';
                 context.lineJoin = 'round';
                 context.beginPath();
-                context.moveTo(oldX, oldY);
-                context.lineTo(x, y);
+                //titleの分の56px引いておく
+                context.moveTo(oldX, oldY-56);
+                context.lineTo(x, y-56);
                 context.stroke();
                 context.closePath();
                 oldX = x;
@@ -208,9 +187,11 @@
             $("#save").on("click", function(){
                 const key = $("#key").val();
                 const value = canvas.toDataURL();
-                localStorage.setItem(key, value);
+                const map_array = [lat_v, lng_v, z, value];
+                const map_json = JSON.stringify(map_array);
+                localStorage.setItem(key, map_json);
 
-                const html = "<tr><th>"+key+"</th><td>"+value+"</td></tr>";
+                const html = "<tr><th>"+key+"</th><td>"+lat_v+","+lng_v+"</td></tr>";
                 $("#list").append(html);
             })
 
@@ -223,13 +204,60 @@
             //3.ページ読み込み：保存データ取得表示
             for(let i=0; i<localStorage.length; i++){
                 const key = localStorage.key(i);
-                const value = localStorage.getItem(key);
-                const html = "<tr><th>"+key+"</th><td>"+value+"</td></tr>";
+                const map_json = localStorage.getItem(key);
+                const map_array = JSON.parse(map_json);
+                const html = "<tr><th>"+key+"</th><td>"+map_array[0]+","+map_array[1]+"</td></tr>";
 
                 $("#list").append(html);
             }
 
-            </script>
+            //4.要素の読み込み
+            //タイトルをクリックしたら読み込む
+            let out_key;
+            $("#list th").on("click", function(){
+                out_key = $(this).text();
+                console.log(out_key);
+                $("#read-key").val(out_key);
+            })
 
+            $("#read_map-ok").on("click", function(){
+                $(".init_map").css("display","none");
+                
+                //localStorageからの読み込み
+                let context = canvas.getContext('2d');
+                const imgData = new Image();
+                const map_json = localStorage.getItem(out_key);
+                const map_array = JSON.parse(map_json);
+                lat_v = map_array[0];
+                lng_v = map_array[1];
+                z = map_array[2];
+
+                map = new google.maps.Map(
+                    document.getElementById("gmap"),{
+                        zoom : z,
+                        center : new google.maps.LatLng(lat_v, lng_v),
+                        mapTypeId : google.maps.MapTypeId.ROADMAP
+                    }
+                );
+
+                let points = [], myPath = new google.maps.Polyline();
+                google.maps.event.addListener(map, "click", function(evt) {
+                    let pos = evt.latLng;
+                    let lat = pos.lat();
+                    let lng = pos.lng();
+                    document.getElementById("result").innerHTML = "緯度："+lat+"、経度："+lng;
+                    points.push(new google.maps.LatLng(lat, lng));
+                    myPath.setPath(points);
+                    myPath.setMap(map);
+                });
+
+                imgData.src = map_array[3];
+                console.log(imgData.src);
+                context.drawImage(imgData, 0, 0);
+                $(".fix_map").fadeIn(1000);
+                $("#key").val(out_key);
+            })
+
+        </script>
     </body>
 </html>
